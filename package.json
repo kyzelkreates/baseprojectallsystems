@@ -1,0 +1,13 @@
+{
+  "name": "bco-core",
+  "version": "1.0.0",
+  "description": "Brandable Control OS — Runs 1–10 complete",
+  "type": "module",
+  "main": "bco/index.js",
+  "scripts": {
+    "start": "echo 'BCO Core is a static JS library. Open index.html to view the project page.'"
+  },
+  "keywords": ["bco", "control-os", "event-driven", "modular", "saas"],
+  "author": "Kyzel Kreates",
+  "license": "MIT"
+}
