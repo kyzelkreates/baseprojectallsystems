@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BCO Core — Rebuild Guide</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f; --surface: #12121a; --surface2: #16162a;
+      --border: #1e1e2e; --border2: #2a2a3e;
+      --accent: #7c6cfc; --accent2: #4fc3f7; --accent3: #f59e0b;
+      --text: #e2e2f0; --muted: #6b6b88; --green: #56d364; --red: #f87171;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* NAV */
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem 2rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(10,10,15,0.95); backdrop-filter: blur(12px); z-index: 100; }
+    .nav-logo { font-family: monospace; font-size: 0.95rem; font-weight: 700; color: var(--accent); }
+    .nav-back { display: flex; align-items: center; gap: 0.5rem; color: var(--muted); font-size: 0.85rem; transition: color 0.2s; }
+    .nav-back:hover { color: var(--text); text-decoration: none; }
+    .nav-right { display: flex; gap: 0.75rem; align-items: center; }
+
+    /* SHORTCUT BAR */
+    .shortcut-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 2rem;
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      align-items: center;
+      overflow-x: auto;
+    }
+    .shortcut-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-right: 0.5rem; white-space: nowrap; }
+    .sc-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: 1px solid var(--border2);
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .sc-btn:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; background: rgba(124,108,252,0.08); }
+    .sc-btn.green { border-color: rgba(86,211,100,0.3); }
+    .sc-btn.green:hover { border-color: var(--green); color: var(--green); background: rgba(86,211,100,0.06); }
+    .sc-btn.amber { border-color: rgba(245,158,11,0.3); }
+    .sc-btn.amber:hover { border-color: var(--accent3); color: var(--accent3); background: rgba(245,158,11,0.06); }
+
+    /* LAYOUT */
+    .layout { display: flex; min-height: calc(100vh - 112px); }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 260px; flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 0;
+      position: sticky; top: 112px;
+      height: calc(100vh - 112px);
+      overflow-y: auto;
+    }
+    .sidebar-section { padding: 0 1.25rem; margin-bottom: 1.5rem; }
+    .sidebar-heading { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.5rem; }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      margin-bottom: 0.1rem;
+    }
+    .sidebar-link:hover { color: var(--text); background: var(--surface2); text-decoration: none; }
+    .sidebar-link.active { color: var(--accent); background: rgba(124,108,252,0.1); }
+    .sidebar-link .num { font-family: monospace; font-size: 0.7rem; color: var(--muted); width: 1.5rem; }
+    .progress-bar { margin: 0 1.25rem 1rem; }
+    .progress-label { font-size: 0.72rem; color: var(--muted); display: flex; justify-content: space-between; margin-bottom: 0.4rem; }
+    .progress-track { background: var(--border); border-radius: 99px; height: 4px; }
+    .progress-fill { background: var(--accent); border-radius: 99px; height: 4px; width: 0%; transition: width 0.4s; }
+
+    /* MAIN */
+    main { flex: 1; padding: 2.5rem 3rem; max-width: 860px; }
+
+    /* HERO */
+    .guide-hero { margin-bottom: 3rem; }
+    .guide-tag { display: inline-block; font-family: monospace; font-size: 0.72rem; color: var(--accent); border: 1px solid var(--accent); padding: 0.25rem 0.7rem; border-radius: 99px; margin-bottom: 1rem; letter-spacing: 0.1em; }
+    .guide-hero h1 { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
+    .guide-hero p { color: var(--muted); line-height: 1.8; max-width: 580px; }
+
+    /* CHECKLIST CARD */
+    .checklist-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .checklist-card h3 { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; }
+    .check-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+    .check-item:last-child { border-bottom: none; }
+    .check-box { width: 18px; height: 18px; border: 1.5px solid var(--border2); border-radius: 4px; flex-shrink: 0; margin-top: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .check-box.done { background: var(--green); border-color: var(--green); }
+    .check-box.done::after { content: '✓'; font-size: 11px; color: #000; font-weight: 700; }
+    .check-text { font-size: 0.85rem; line-height: 1.5; }
+    .check-text.done-text { text-decoration: line-through; color: var(--muted); }
+    .check-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+
+    /* SECTIONS */
+    .guide-section { margin-bottom: 3.5rem; scroll-margin-top: 130px; }
+    .guide-section h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.75rem; }
+    .guide-section h2 .step-badge { font-family: monospace; font-size: 0.7rem; background: rgba(124,108,252,0.15); color: var(--accent); padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 700; }
+    .guide-section > p { color: var(--muted); line-height: 1.8; margin-bottom: 1.25rem; }
+
+    /* CODE BLOCKS */
+    .code-block {
+      background: #0d0d18;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+    .code-header { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .code-lang { font-family: monospace; font-size: 0.7rem; color: var(--muted); }
+    .copy-btn { font-size: 0.72rem; color: var(--muted); cursor: pointer; padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid var(--border); background: transparent; transition: all 0.15s; }
+    .copy-btn:hover { color: var(--text); border-color: var(--border2); }
+    .copy-btn.copied { color: var(--green); border-color: var(--green); }
+    pre { padding: 1.25rem; overflow-x: auto; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.8rem; line-height: 1.7; color: #c9d1d9; }
+    .kw { color: #ff79c6; } .fn { color: #8be9fd; } .str { color: #f1fa8c; }
+    .cm { color: #6272a4; font-style: italic; } .num { color: #bd93f9; }
+    .var { color: #50fa7b; }
+
+    /* CALLOUTS */
+    .callout { display: flex; gap: 0.75rem; padding: 1rem 1.25rem; border-radius: 8px; margin: 1rem 0; font-size: 0.85rem; line-height: 1.6; }
+    .callout-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .callout.info { background: rgba(79,195,247,0.08); border: 1px solid rgba(79,195,247,0.2); }
+    .callout.info .callout-icon { color: var(--accent2); }
+    .callout.warn { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
+    .callout.warn .callout-icon { color: var(--accent3); }
+    .callout.danger { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); }
+    .callout.danger .callout-icon { color: var(--red); }
+    .callout.success { background: rgba(86,211,100,0.08); border: 1px solid rgba(86,211,100,0.2); }
+    .callout.success .callout-icon { color: var(--green); }
+    .callout-body strong { color: var(--text); }
+
+    /* RULE TABLE */
+    .rule-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.83rem; }
+    .rule-table th { background: var(--surface); color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.65rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+    .rule-table td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+    .rule-table tr:last-child td { border-bottom: none; }
+    .rule-table tr:hover td { background: var(--surface2); }
+    .rule-num { font-family: monospace; color: var(--accent); font-weight: 700; font-size: 0.75rem; }
+    .rule-name { font-weight: 600; }
+    .rule-desc { color: var(--muted); font-size: 0.8rem; }
+    .badge { display: inline-block; font-family: monospace; font-size: 0.68rem; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 700; }
+    .badge-red { background: rgba(248,113,113,0.15); color: var(--red); }
+    .badge-green { background: rgba(86,211,100,0.12); color: var(--green); }
+
+    /* RUN TABLE */
+    .run-table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.83rem; }
+    .run-table th { background: var(--surface); color: var(--muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.65rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+    .run-table td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .run-table tr:last-child td { border-bottom: none; }
+    .run-table tr:hover td { background: var(--surface2); }
+    .rn { font-family: monospace; color: var(--accent); font-weight: 700; }
+    .files-chip { font-family: monospace; font-size: 0.72rem; color: var(--muted); background: var(--surface2); padding: 0.15rem 0.5rem; border-radius: 4px; }
+
+    /* DEP DIAGRAM */
+    .dep-diagram { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin: 1rem 0; font-family: monospace; font-size: 0.8rem; line-height: 2; }
+    .dep-row { display: flex; align-items: center; gap: 0.5rem; }
+    .dep-name { color: var(--accent); min-width: 120px; }
+    .dep-arrow { color: var(--muted); }
+    .dep-imports { color: var(--text); }
+
+    /* FOOTER */
+    footer { border-top: 1px solid var(--border); padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; color: var(--muted); font-size: 0.78rem; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      main { padding: 1.5rem; }
+      .shortcut-bar { padding: 0.75rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-back" style="text-decoration:none;">
+    <span>&#8592;</span> <span class="nav-logo">BCO Core</span>
+  </a>
+  <div class="nav-right">
+    <a class="sc-btn" href="https://github.com/kyzelkreates/baseprojectallsystems" target="_blank">&#8599; GitHub</a>
+    <a class="sc-btn green" href="bco/index.js" target="_blank">&#128196; barrel</a>
+  </div>
+</nav>
+
+<!-- SHORTCUT BAR -->
+<div class="shortcut-bar">
+  <span class="shortcut-label">Jump to:</span>
+  <a class="sc-btn" href="#checklist">&#9745; Checklist</a>
+  <a class="sc-btn" href="#run-order">&#9654; Run Order</a>
+  <a class="sc-btn" href="#rules">&#128274; Run 0 Rules</a>
+  <a class="sc-btn" href="#layers">&#127968; Layer Deps</a>
+  <a class="sc-btn" href="#formats">&#128203; Event Format</a>
+  <a class="sc-btn" href="#storage">&#128190; Storage API</a>
+  <a class="sc-btn" href="#modules">&#9881; Add Module</a>
+  <a class="sc-btn" href="#agents">&#129302; Add Agent</a>
+  <a class="sc-btn" href="#governance">&#128737; Governance</a>
+  <a class="sc-btn" href="#runtime">&#9881; Runtime Notes</a>
+  <a class="sc-btn amber" href="bco/REBUILD_INSTRUCTIONS.md" target="_blank">&#128196; Raw .md</a>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="progress-bar">
+      <div class="progress-label"><span>Build Progress</span><span id="prog-pct">0%</span></div>
+      <div class="progress-track"><div class="progress-fill" id="prog-fill"></div></div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Getting Started</div>
+      <a class="sidebar-link" href="#checklist"><span class="num">00</span> Quick Checklist</a>
+      <a class="sidebar-link" href="#run-order"><span class="num">01</span> Run Order</a>
+      <a class="sidebar-link" href="#rules"><span class="num">02</span> Run 0 Rules</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Architecture</div>
+      <a class="sidebar-link" href="#layers"><span class="num">03</span> Layer Dependencies</a>
+      <a class="sidebar-link" href="#formats"><span class="num">04</span> Event &amp; Action Format</a>
+      <a class="sidebar-link" href="#storage"><span class="num">05</span> Storage API</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Extending</div>
+      <a class="sidebar-link" href="#modules"><span class="num">06</span> Add a Module</a>
+      <a class="sidebar-link" href="#agents"><span class="num">07</span> Add an Agent Type</a>
+      <a class="sidebar-link" href="#governance"><span class="num">08</span> Add a Gov Check</a>
+      <a class="sidebar-link" href="#workflow-nodes"><span class="num">09</span> Add a Workflow Node</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Reference</div>
+      <a class="sidebar-link" href="#runtime"><span class="num">10</span> Runtime Notes</a>
+      <a class="sidebar-link" href="#future"><span class="num">11</span> Future Runs</a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main>
+
+    <!-- HERO -->
+    <div class="guide-hero">
+      <div class="guide-tag">BUILDER RECONSTRUCTION GUIDE</div>
+      <h1>BCO Core &mdash;<br />Rebuild Instructions</h1>
+      <p>Everything a developer needs to reconstruct, extend, or fork BCO Core correctly. Follow the run order. Never skip a step. Run 0 is law.</p>
+    </div>
+
+    <!-- CHECKLIST -->
+    <div id="checklist" class="guide-section">
+      <h2><span class="step-badge">00</span> Quick Rebuild Checklist</h2>
+      <p>Tick these off before writing a single line of code. All must be green before you start extending.</p>
+      <div class="checklist-card">
+        <h3>&#9745; Pre-build checks</h3>
+        <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text">Read <code>.agents/rules/bco-core-run0-architecture.md</code> in full<div class="check-sub">The immutable system contract. Every decision flows from it.</div></div></div>
+        <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text">Copy all files preserving the exact directory structure<div class="check-sub">Cross-file imports are explicit by path — renaming breaks them.</div></div></div>
+        <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text">Confirm <code>bco/index.js</code> is the single public import surface</div></div>
+        <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text">Set storage adapter target in <code>deploy/deployment.js</code> (<code>LOCAL</code> or <code>SUPABASE</code>)</div></div>
+        <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text">Run back-reference audit — no lower layer imports from a higher one<div class="check-sub"><code>grep -rn "from.*governance/" bco/core/ bco/ai/ bco/saas/</code> → should return nothing</div></div></div>
+        <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text">Run <code>require()</code> audit — must be zero<div class="check-sub"><code>grep -rn "require(" bco/ --include="*.js"</code></div></div></div>
+        <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text">Call <code>initSystem()</code> once at boot before any other BCO call</div></div>
+        <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text">Set autonomy mode per tenant via <code>setAutonomyMode()</code> — default is <code>ASSISTED</code></div></div>
+        <div class="check-item"><div class="check-box" onclick="toggleCheck(this)"></div><div class="check-text">Create initial snapshot per tenant: <code>createSnapshot(tenantId, 'initial')</code></div></div>
+      </div>
+    </div>
+
+    <!-- RUN ORDER -->
+    <div id="run-order" class="guide-section">
+      <h2><span class="step-badge">01</span> Run Order</h2>
+      <p>Each run builds on the previous. Never skip a run. Never implement a higher run before the lower one is stable.</p>
+
+      <div class="callout warn"><span class="callout-icon">&#9888;</span><div class="callout-body"><strong>Order is mandatory.</strong> Run 6 depends on Run 1–3 being solid. Run 10 depends on all previous runs. Skipping creates hidden coupling that breaks the architecture contract.</div></div>
+
+      <table class="run-table">
+        <thead><tr><th>Run</th><th>Layer</th><th>What it adds</th><th>Files</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">0</td><td><strong>Architecture Contract</strong></td><td>Immutable rules — read before anything else</td><td><span class="files-chip">.md</span></td></tr>
+          <tr><td class="rn">1</td><td><strong>State Engine</strong></td><td>storage.js, storage-adapter.js, events.js</td><td><span class="files-chip">core/</span></td></tr>
+          <tr><td class="rn">2</td><td><strong>Rule + Action Engine</strong></td><td>rules.js, actions.js — lifecycle and evaluation</td><td><span class="files-chip">core/</span></td></tr>
+          <tr><td class="rn">3</td><td><strong>Module System</strong></td><td>modules.js, init.js — registry and boot</td><td><span class="files-chip">core/</span></td></tr>
+          <tr><td class="rn">4</td><td><strong>UI + PWA + Brand</strong></td><td>Read-only render layer, service worker, themes</td><td><span class="files-chip">ui/ pwa/ brand/</span></td></tr>
+          <tr><td class="rn">5</td><td><strong>AI Analytics</strong></td><td>Stats, patterns, risk, forecast, cross-module insights</td><td><span class="files-chip">ai/</span></td></tr>
+          <tr><td class="rn">6</td><td><strong>Multi-Tenant SaaS</strong></td><td>Tenant isolation, billing, marketplace, RBAC</td><td><span class="files-chip">saas/ auth/ deploy/</span></td></tr>
+          <tr><td class="rn">7</td><td><strong>Marketplace Ecosystem</strong></td><td>Sandbox, registry, semver, revenue sharing</td><td><span class="files-chip">ecosystem/</span></td></tr>
+          <tr><td class="rn">8</td><td><strong>No-Code Automation</strong></td><td>20 node types, compiler, engine, scheduler</td><td><span class="files-chip">nocode/</span></td></tr>
+          <tr><td class="rn">9</td><td><strong>Autonomous Agents</strong></td><td>6 agent types, per-tenant pools, planner, recovery</td><td><span class="files-chip">agents/</span></td></tr>
+          <tr><td class="rn">10</td><td><strong>Governance</strong></td><td>5-check gate, audit log, snapshots, compliance, circuit breaker</td><td><span class="files-chip">governance/</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- RUN 0 RULES -->
+    <div id="rules" class="guide-section">
+      <h2><span class="step-badge">02</span> Run 0 — Architecture Rules</h2>
+      <p>These rules are immutable. If you want to change the architecture, write a new versioned contract document first. Never modify existing code to break the contract.</p>
+
+      <div class="callout danger"><span class="callout-icon">&#128683;</span><div class="callout-body"><strong>These are not guidelines.</strong> They are system law. Any code that violates them is invalid architecture, regardless of whether it works.</div></div>
+
+      <table class="rule-table">
+        <thead><tr><th>#</th><th>Rule</th><th>What it forbids</th></tr></thead>
+        <tbody>
+          <tr><td class="rule-num">01</td><td><div class="rule-name">Single Source of Truth</div><div class="rule-desc">One global state store in <code>storage.js</code>. No duplicates.</div></td><td><span class="badge badge-red">local component state as SSOT</span></td></tr>
+          <tr><td class="rule-num">02</td><td><div class="rule-name">Event-First Architecture</div><div class="rule-desc">Everything starts as an event. State changes only after event processing.</div></td><td><span class="badge badge-red">direct state mutation</span></td></tr>
+          <tr><td class="rule-num">03</td><td><div class="rule-name">Storage Abstraction</div><div class="rule-desc">All storage through the adapter interface.</div></td><td><span class="badge badge-red">calling localStorage or DB directly</span></td></tr>
+          <tr><td class="rule-num">04</td><td><div class="rule-name">Module Isolation</div><div class="rule-desc">Modules communicate only via events/actions.</div></td><td><span class="badge badge-red">cross-module direct writes</span></td></tr>
+          <tr><td class="rule-num">05</td><td><div class="rule-name">AI Non-Destructive</div><div class="rule-desc">AI suggests and analyses, never mutates.</div></td><td><span class="badge badge-red">AI bypassing action engine</span></td></tr>
+          <tr><td class="rule-num">06</td><td><div class="rule-name">Rule Engine Authority</div><div class="rule-desc">Rules evaluated before every action.</div></td><td><span class="badge badge-red">skipping rule evaluation</span></td></tr>
+          <tr><td class="rule-num">07</td><td><div class="rule-name">UI Read-Only</div><div class="rule-desc">UI dispatches events and renders state only.</div></td><td><span class="badge badge-red">UI direct state mutation</span></td></tr>
+          <tr><td class="rule-num">08</td><td><div class="rule-name">No Hard Coupling</div><div class="rule-desc">No direct storage calls outside adapter, no hidden deps.</div></td><td><span class="badge badge-red">cross-layer hidden imports</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- LAYER DEPS -->
+    <div id="layers" class="guide-section">
+      <h2><span class="step-badge">03</span> Layer Dependency Rules</h2>
+      <p>Higher layers import from lower ones. Lower layers must never import from higher ones. This is the dependency direction — never reverse it.</p>
+
+      <div class="dep-diagram">
+        <div class="dep-row"><span class="dep-name">governance/</span><span class="dep-arrow">&#8592; imports from</span><span class="dep-imports">agents/, saas/, auth/, core/, nocode/</span></div>
+        <div class="dep-row"><span class="dep-name">agents/</span><span class="dep-arrow">&#8592; imports from</span><span class="dep-imports">core/, ai/, saas/, ui/, nocode/</span></div>
+        <div class="dep-row"><span class="dep-name">nocode/</span><span class="dep-arrow">&#8592; imports from</span><span class="dep-imports">core/, saas/, ui/</span></div>
+        <div class="dep-row"><span class="dep-name">ecosystem/</span><span class="dep-arrow">&#8592; imports from</span><span class="dep-imports">core/, saas/</span></div>
+        <div class="dep-row"><span class="dep-name">saas/</span><span class="dep-arrow">&#8592; imports from</span><span class="dep-imports">core/, auth/</span></div>
+        <div class="dep-row"><span class="dep-name">ai/</span><span class="dep-arrow">&#8592; imports from</span><span class="dep-imports">core/</span></div>
+        <div class="dep-row"><span class="dep-name">ui/</span><span class="dep-arrow">&#8592; imports from</span><span class="dep-imports">core/, ai/</span></div>
+        <div class="dep-row"><span class="dep-name">auth/</span><span class="dep-arrow">&#8592; imports from</span><span class="dep-imports">core/</span></div>
+        <div class="dep-row"><span class="dep-name">core/</span><span class="dep-arrow">&#8592; imports from</span><span class="dep-imports" style="color:var(--muted)">(nothing — foundation only)</span></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">bash — audit back-references</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm"># Run this after any change — should always return nothing</span>
+grep -rn <span class="str">"from.*governance/"</span> bco/core/ bco/ai/ bco/saas/
+grep -rn <span class="str">"from.*agents/"</span> bco/core/ bco/ai/ bco/ui/ bco/saas/</pre>
+      </div>
+    </div>
+
+    <!-- EVENT FORMAT -->
+    <div id="formats" class="guide-section">
+      <h2><span class="step-badge">04</span> Universal Event &amp; Action Format</h2>
+      <p>Every event and action in the system must match these exact shapes. These formats are fixed by Run 0 — never invent a wrapper or rename a field.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">js — Event shape</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre>{
+  <span class="var">id</span>:        crypto.<span class="fn">randomUUID</span>(),   <span class="cm">// always generate fresh</span>
+  <span class="var">type</span>:      <span class="str">"ALL_CAPS_SNAKE_CASE"</span>,   <span class="cm">// string constant</span>
+  <span class="var">source</span>:   <span class="str">"user"</span> | <span class="str">"ai"</span> | <span class="str">"system"</span> | <span class="str">"agent"</span> | <span class="str">"workflow"</span>,
+  <span class="var">module</span>:    <span class="str">"MODULE_NAME"</span>,
+  <span class="var">payload</span>:   {},                    <span class="cm">// arbitrary object</span>
+  <span class="var">timestamp</span>: <span class="kw">new</span> Date().<span class="fn">toISOString</span>()
+}</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">js — Action shape</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre>{
+  <span class="var">id</span>:          crypto.<span class="fn">randomUUID</span>(),
+  <span class="var">type</span>:        <span class="str">"ALL_CAPS_SNAKE_CASE"</span>,
+  <span class="var">status</span>:      <span class="str">"pending"</span> | <span class="str">"approved"</span> | <span class="str">"rejected"</span> | <span class="str">"executed"</span>,
+  <span class="var">triggeredBy</span>: <span class="str">"event_id"</span>,
+  <span class="var">payload</span>:     {},
+  <span class="var">timestamp</span>:   <span class="kw">new</span> Date().<span class="fn">toISOString</span>()
+}</pre>
+      </div>
+
+      <div class="callout info"><span class="callout-icon">&#8505;</span><div class="callout-body">Never add a <code>data:</code> wrapper. Never use camelCase for the <code>type</code> field. These shapes are validated at the governance layer — wrong format = blocked action.</div></div>
+    </div>
+
+    <!-- STORAGE API -->
+    <div id="storage" class="guide-section">
+      <h2><span class="step-badge">05</span> Storage API Contract</h2>
+      <p>The system exposes exactly five storage methods. These are the only ways to read or write state. The adapter is swappable (Local &rarr; Supabase &rarr; custom) — that is the whole point.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">js — The only five methods</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre>StorageAdapter.<span class="fn">get</span>(key)
+StorageAdapter.<span class="fn">set</span>(key, value)
+StorageAdapter.<span class="fn">update</span>(key, partialValue)
+StorageAdapter.<span class="fn">delete</span>(key)
+StorageAdapter.<span class="fn">subscribe</span>(key, callback)</pre>
+      </div>
+
+      <div class="callout warn"><span class="callout-icon">&#9888;</span><div class="callout-body"><strong>Never call <code>localStorage</code>, <code>supabase</code>, or any DB directly.</strong> If you need a new storage backend, write a new adapter in <code>core/storage-adapter.js</code> — don't bypass it.</div></div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">js — Key naming convention</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">// Tenant-scoped keys</span>
+<span class="str">`t:<span class="var">${tenantId}</span>:bco_modules`</span>
+<span class="str">`t:<span class="var">${tenantId}</span>:bco_workflows`</span>
+
+<span class="cm">// Global platform keys (no prefix)</span>
+<span class="str">"bco_audit_log"</span>
+<span class="str">"bco_autonomy_mode"</span></pre>
+      </div>
+    </div>
+
+    <!-- ADD MODULE -->
+    <div id="modules" class="guide-section">
+      <h2><span class="step-badge">06</span> Adding a New Module</h2>
+      <p>Every module must follow the module contract from Run 0. Use <code>bco/modules/sleep.module.js</code> as a reference implementation.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">js — Module contract</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="kw">export default</span> {
+  <span class="var">name</span>:        <span class="str">"MY_MODULE"</span>,
+  <span class="var">entities</span>:    [],   <span class="cm">// data schemas</span>
+  <span class="var">actions</span>:     [],   <span class="cm">// action types this module handles</span>
+  <span class="var">rules</span>:       [],   <span class="cm">// rules this module registers</span>
+  <span class="var">ui_blocks</span>:   [],   <span class="cm">// UI components it provides</span>
+  <span class="var">permissions</span>: []    <span class="cm">// who can access it</span>
+};</pre>
+      </div>
+
+      <div class="callout success"><span class="callout-icon">&#10003;</span><div class="callout-body">Register via <code>registerModule()</code> from <code>core/modules.js</code>. Communicate only via <code>dispatchEvent()</code> and <code>dispatchAction()</code>. Never write directly to another module's state.</div></div>
+    </div>
+
+    <!-- ADD AGENT -->
+    <div id="agents" class="guide-section">
+      <h2><span class="step-badge">07</span> Adding a New Agent Type</h2>
+      <p>The agent system uses capability gates and a forbidden list (§13) enforced at runtime — not just at creation time.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">js — Steps to add an agent type</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">// 1. Add to AGENT_TYPES in agents/agent-core.js</span>
+<span class="kw">export const</span> <span class="var">AGENT_TYPES</span> = {
+  <span class="cm">// ... existing types ...</span>
+  MY_AGENT: <span class="str">"my_agent"</span>
+};
+
+<span class="cm">// 2. Add capabilities to AGENT_CAPABILITIES</span>
+<span class="var">AGENT_CAPABILITIES</span>[AGENT_TYPES.MY_AGENT] = [
+  <span class="str">"do_safe_thing"</span>,
+  <span class="str">"analyse_data"</span>
+];
+
+<span class="cm">// 3. Confirm NONE of these appear in AGENT_FORBIDDEN</span>
+<span class="cm">// _assertNotForbidden() will throw at execution time if they do</span></pre>
+      </div>
+
+      <div class="callout danger"><span class="callout-icon">&#128683;</span><div class="callout-body"><strong>§13 is absolute.</strong> Never give an agent direct storage access. All state mutations go through <code>dispatchAction()</code>. The forbidden list covers: <code>mutate_billing</code>, <code>mutate_permissions</code>, <code>bypass_rule_engine</code>, <code>cross_tenant_read</code>, <code>delete_tenant</code>.</div></div>
+    </div>
+
+    <!-- ADD GOVERNANCE CHECK -->
+    <div id="governance" class="guide-section">
+      <h2><span class="step-badge">08</span> Adding a Governance Check</h2>
+      <p><code>governance-engine.js</code> runs five checks in strict order: <code>tenant &#8594; permission &#8594; billing &#8594; safety &#8594; autonomy</code>. Adding a sixth is straightforward.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">js — Add a 6th governance check</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">// 1. Write the check function</span>
+<span class="kw">function</span> <span class="fn">_checkYourThing</span>(action, context) {
+  <span class="kw">if</span> (somethingBad) {
+    <span class="kw">return</span> { ok: <span class="kw">false</span>, reason: <span class="str">"Explain why it was blocked."</span> };
+  }
+  <span class="kw">return</span> { ok: <span class="kw">true</span>, reason: <span class="str">""</span> };
+}
+
+<span class="cm">// 2. Call it inside governanceCheck()</span>
+<span class="kw">const</span> <span class="var">yourResult</span> = <span class="fn">_checkYourThing</span>(action, context);
+<span class="kw">if</span> (!yourResult.ok) violations.<span class="fn">push</span>(<span class="str">"your_check"</span>);
+
+<span class="cm">// 3. Include in allowed condition</span>
+<span class="kw">const</span> <span class="var">allowed</span> = violations.length === <span class="num">0</span>;
+
+<span class="cm">// Every action is still audit-logged — do not remove that.</span></pre>
+      </div>
+    </div>
+
+    <!-- ADD WORKFLOW NODE -->
+    <div id="workflow-nodes" class="guide-section">
+      <h2><span class="step-badge">09</span> Adding a Workflow Node</h2>
+      <p>There are 20 node types across 5 categories. Adding a new one requires changes in 3 files.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-lang">js — 3-file checklist for a new node</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre><span class="cm">// File 1: nocode/workflow-schema.js</span>
+NODE_TYPES.MY_NODE = <span class="str">"MY_NODE"</span>;
+NODE_CATEGORIES.action.<span class="fn">push</span>(NODE_TYPES.MY_NODE); <span class="cm">// or other category</span>
+
+<span class="cm">// File 2: nocode/workflow-engine.js — _executeActionNode()</span>
+<span class="kw">case</span> NODE_TYPES.MY_NODE:
+  <span class="kw">return await</span> <span class="fn">_handleMyNode</span>(node, context);
+
+<span class="cm">// File 3: nocode/workflow-templates.js (optional but recommended)</span>
+<span class="cm">// Add a template entry if this is a common pattern</span></pre>
+      </div>
+
+      <div class="callout info"><span class="callout-icon">&#8505;</span><div class="callout-body">If the new node is a trigger type, also add it to <code>evaluateTrigger()</code> in <code>workflow-engine.js</code>.</div></div>
+    </div>
+
+    <!-- RUNTIME NOTES -->
+    <div id="runtime" class="guide-section">
+      <h2><span class="step-badge">10</span> Runtime Notes</h2>
+
+      <div class="callout success"><span class="callout-icon">&#9881;</span><div class="callout-body"><strong>No build step required.</strong> BCO Core is plain ES modules. Bundle with Vite, Rollup, or esbuild for browser use. Set <code>"type": "module"</code> in <code>package.json</code>.</div></div>
+
+      <table class="rule-table">
+        <thead><tr><th>Topic</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Module syntax</strong></td><td>All files use <code>import</code>/<code>export</code>. No CommonJS <code>require()</code>.</td></tr>
+          <tr><td><strong>Runtimes</strong></td><td>Modern browsers (bundled), Deno, Node 18+, Bun</td></tr>
+          <tr><td><strong>crypto.randomUUID()</strong></td><td>Used throughout. Native in modern browsers and Node 15+.</td></tr>
+          <tr><td><strong>Sandbox</strong></td><td><code>ecosystem/sandbox.js</code> uses Web Worker in browsers, <code>node:vm</code> in Node. Ensure your runtime supports the target.</td></tr>
+          <tr><td><strong>performance.memory</strong></td><td><code>agents/metrics.js</code> — browser only. Returns <code>-1</code> in Node. Expected, not a bug.</td></tr>
+          <tr><td><strong>In-tab reactivity</strong></td><td><code>storage.subscribe()</code> is cross-tab via <code>StorageEvent</code>. For same-tab reactivity add a custom EventEmitter (future Run 11).</td></tr>
+          <tr><td><strong>Tenant isolation</strong></td><td>All tenant data uses <code>t:{tenantId}:</code> key prefix. Never mix tenant keys.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FUTURE RUNS -->
+    <div id="future" class="guide-section">
+      <h2><span class="step-badge">11</span> Future Runs</h2>
+      <p>The system is production-ready at Run 10. Suggested next runs — all must still follow Run 0.</p>
+
+      <table class="run-table">
+        <thead><tr><th>Run</th><th>Suggested Layer</th><th>What it adds</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">11</td><td><strong>Real-time Collaboration</strong></td><td>Custom EventEmitter for in-tab sync, WebSocket event broadcast across users</td></tr>
+          <tr><td class="rn">12</td><td><strong>Plugin Marketplace UI</strong></td><td>Frontend install/uninstall flows, developer portal</td></tr>
+          <tr><td class="rn">13</td><td><strong>Advanced Scheduler</strong></td><td>Full 5-field cron for TRIGGER_TIME nodes</td></tr>
+          <tr><td class="rn">14</td><td><strong>Observability Export</strong></td><td>OpenTelemetry, Datadog, Sentry adapters</td></tr>
+          <tr><td class="rn">15</td><td><strong>White-Label SDK</strong></td><td>Generate a branded SDK from BCO Core for client distribution</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info"><span class="callout-icon">&#8505;</span><div class="callout-body">Whatever you build next — follow Run 0. Always.</div></div>
+    </div>
+
+  </main>
+</div>
+
+<footer>
+  <span>BCO Core &mdash; built by <strong>Kyzel Kreates</strong> &middot; Architecture contract: Run 0 (immutable)</span>
+  <span><a href="index.html">&#8592; Back to overview</a> &nbsp;&middot;&nbsp; <a href="https://github.com/kyzelkreates/baseprojectallsystems" target="_blank">GitHub &#8599;</a></span>
+</footer>
+
+<script>
+  // Checkbox toggle with localStorage persistence
+  function toggleCheck(el) {
+    el.classList.toggle('done');
+    const text = el.nextElementSibling;
+    text.classList.toggle('done-text');
+    updateProgress();
+    saveChecks();
+  }
+
+  function updateProgress() {
+    const boxes = document.querySelectorAll('.check-box');
+    const done  = document.querySelectorAll('.check-box.done').length;
+    const pct   = Math.round((done / boxes.length) * 100);
+    document.getElementById('prog-fill').style.width = pct + '%';
+    document.getElementById('prog-pct').textContent  = pct + '%';
+  }
+
+  function saveChecks() {
+    const state = [...document.querySelectorAll('.check-box')].map(b => b.classList.contains('done'));
+    localStorage.setItem('bco_checklist', JSON.stringify(state));
+  }
+
+  function loadChecks() {
+    const saved = JSON.parse(localStorage.getItem('bco_checklist') || '[]');
+    const boxes = document.querySelectorAll('.check-box');
+    saved.forEach((done, i) => {
+      if (done && boxes[i]) {
+        boxes[i].classList.add('done');
+        boxes[i].nextElementSibling?.classList.add('done-text');
+      }
+    });
+    updateProgress();
+  }
+
+  // Copy buttons
+  function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1500);
+    });
+  }
+
+  // Sidebar active link on scroll
+  const sections = document.querySelectorAll('.guide-section');
+  const links    = document.querySelectorAll('.sidebar-link');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        links.forEach(l => {
+          l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Init
+  loadChecks();
+</script>
+
+</body>
+</html>
